@@ -4,6 +4,8 @@ import 'package:flutter_course_15_flash_chat/screens/registration_screen.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_course_15_flash_chat/components/rounded_button.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_course_15_flash_chat/services/local_notification_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
   static const String id = 'welcome_screen';
@@ -48,6 +50,40 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     controller.addListener(() {
       setState(() {});
       print(animation.value);
+    });
+
+    LocalNotificationService.initialize(context);
+
+    //gives you the message that the user has tapped on
+    //and it open the app from terminated state
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        print('background and terminated');
+        print('notification title:${message.notification!.title}');
+        print('notification body:${message.notification!.body}');
+        final routeFromMessage = message.data['route'];
+        print('route $routeFromMessage');
+        Navigator.of(context).pushNamed(routeFromMessage);
+      }
+    });
+
+    //the app is in foreground
+    FirebaseMessaging.onMessage.listen((message) {
+      LocalNotificationService.display(message);
+
+      print('foreground');
+      print('notification title:${message.notification!.title}');
+      print('notification body:${message.notification!.body}');
+    });
+
+    //the app is in background but open
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      print('background and open');
+      print('notification title:${message.notification!.title}');
+      print('notification body:${message.notification!.body}');
+      final routeFromMessage = message.data['route'];
+      print('route $routeFromMessage');
+      Navigator.of(context).pushNamed(routeFromMessage);
     });
   }
 
